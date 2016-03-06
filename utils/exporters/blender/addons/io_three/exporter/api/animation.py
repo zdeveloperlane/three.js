@@ -208,6 +208,10 @@ def _parse_pose_action(action, armature, options):
     channels_rotation = []
     channels_scale = []
 
+    #ZADDED this assumes every single animation uses ALL BONES. this is simply useless.
+    useTheseBones = action.groups.keys();	#Here are the bones we actually are using, by name.
+    #ZADDED END
+
     for pose_bone in armature.pose.bones:
         logger.info("Processing channels for %s",
                     pose_bone.bone.name)
@@ -228,7 +232,15 @@ def _parse_pose_action(action, armature, options):
             _find_channels(action,
                            pose_bone.bone,
                            'scale'))
-
+        
+        #ZADDED BEGIN this if statement
+        if not pose_bone.bone.name in useTheseBones:
+            #Wipe out that data! it doesn't EXIST! by definition (bone mask from animation)
+            channels_location[-1] = [];
+            channels_rotation[-1] = [];
+            channels_scale[-1] = [];
+        #ZADDED END
+    
     frame_step = options[constants.FRAME_STEP]
     frame_index_as_time = options[constants.FRAME_INDEX_AS_TIME]
     for frame_index in range(0, used_frames):
@@ -272,7 +284,13 @@ def _parse_pose_action(action, armature, options):
             return False
 
         for pose_bone in armature.pose.bones:
-
+        
+            #ZADDED BEGIN this if statement
+            if not pose_bone.bone.name in useTheseBones:
+                bone_index += 1;
+                continue;
+            #ZADDED END
+            
             logger.info("Processing bone %s", pose_bone.bone.name)
             if pose_bone.parent is None:
                 bone_matrix = armature_matrix * pose_bone.matrix
